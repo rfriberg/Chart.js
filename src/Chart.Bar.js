@@ -104,21 +104,35 @@
 					label : dataset.label || null,
 					fillColor : dataset.fillColor,
 					strokeColor : dataset.strokeColor,
+					highlightFill : dataset.highlightFill,
+					highlightStroke : dataset.highlightStroke,
 					bars : []
 				};
 
 				this.datasets.push(datasetObject);
 
 				helpers.each(dataset.data,function(dataPoint,index){
+
+					//fillColor may be a single color or an array of colors (one per bar)
+					var fillColor = dataset.fillColor;
+					if(typeof dataset.fillColor === 'object') {
+						fillColor = dataset.fillColor[index];
+					}
+					//strokeColor may be a single color or an array of colors (one per bar)
+					var strokeColor = dataset.strokeColor;
+					if(typeof dataset.strokeColor === 'object') {
+						strokeColor = dataset.strokeColor[index];
+					}
+
 					//Add a new point for each piece of data, passing any required data to draw.
 					datasetObject.bars.push(new this.BarClass({
 						value : dataPoint,
 						label : data.labels[index],
 						datasetLabel: dataset.label,
-						strokeColor : dataset.strokeColor,
-						fillColor : dataset.fillColor,
-						highlightFill : dataset.highlightFill || dataset.fillColor,
-						highlightStroke : dataset.highlightStroke || dataset.strokeColor
+						strokeColor : strokeColor,
+						fillColor : fillColor,
+						highlightFill : dataset.highlightFill || fillColor,
+						highlightStroke : dataset.highlightStroke || strokeColor
 					}));
 				},this);
 
@@ -233,9 +247,16 @@
 
 			this.scale = new this.ScaleClass(scaleOptions);
 		},
-		addData : function(valuesArray,label){
+		addData : function(valuesArray,label,fillColor,strokeColor){
 			//Map the values array for each of the datasets
 			helpers.each(valuesArray,function(value,datasetIndex){
+				//Add any additional fillColors and strokeColors
+				if (fillColor && typeof this.datasets[datasetIndex].fillColor === 'object'){
+					this.datasets[datasetIndex].fillColor.push(fillColor);
+				}
+				if (strokeColor && typeof this.datasets[datasetIndex].strokeColor === 'object'){
+					this.datasets[datasetIndex].strokeColor.push(strokeColor);
+				}
 				//Add a new point for each piece of data, passing any required data to draw.
 				this.datasets[datasetIndex].bars.push(new this.BarClass({
 					value : value,
@@ -245,8 +266,10 @@
 					y: this.scale.endPoint,
 					width : this.scale.calculateBarWidth(this.datasets.length),
 					base : this.scale.endPoint,
-					strokeColor : this.datasets[datasetIndex].strokeColor,
-					fillColor : this.datasets[datasetIndex].fillColor
+					strokeColor : strokeColor || this.datasets[datasetIndex].strokeColor,
+					fillColor : fillColor || this.datasets[datasetIndex].fillColor,
+					highlightStroke : this.datasets[datasetIndex].highlightStroke || strokeColor,
+					highlightFill : this.datasets[datasetIndex].highlightFill || fillColor
 				}));
 			},this);
 
